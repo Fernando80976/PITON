@@ -1,0 +1,7 @@
+tex=input("mete un texto")
+tex1=tex.lower()
+tex1=tex1.replace("a","4")
+tex1=tex1.replace("e","3")
+tex1=tex1.replace("i","1")
+tex1=tex1.replace("o","0")
+print(tex1)
