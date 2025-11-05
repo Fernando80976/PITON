@@ -238,6 +238,10 @@ for elemento in lista5:
 for i in range (0,len(lista5)):
     print(i,"-",lista5[i])
 
+#forma mas eficiente y mejor
+for i,nombre in enumerate(lista5):
+    print(i,"-",nombre)
+
 #si yo quiero referenciar el tercer elemento d ela ultima posicion
 print(lista5[6][2])#segundo elemento del ultimo elemento
 matriz=[[1,2,3],[4,5,6],[7,8,9]]#tipo Excel es un bidimensional
@@ -285,7 +289,11 @@ if 333 in lista8: #if 333 not  in lista8: si no esta en la lista el 333
     print("aparece ",lista8.count(2))
 else:
     print("no esta")
-
+#CUANDO NECESITAMOS HACER UNA COPIA DE UNA LISTA USAMOS ESTO
+num1=[4]
+num2=num1.copy()
+num2[0]*=2
+print(num1)#son referencias asi copiamos una nueva no hacemos referencias a num1
 
 print(lista8.index(333))#devuelve la posicion y si son 2 posiciones te devuelve el del primero
 if 0 in lista8:
@@ -327,3 +335,168 @@ if texto5.isalpha() == True:  # nos dice si tiene o no numeros
     print("no tiene numeros")
 else:
     print("Si tiene numeros")
+
+
+    #tuplas son como listas pero no se pueden modificar jamas
+lsitas=[1,2,3]
+tupla=(1,2,3)#tuplas con parentesis
+tupla2=("ANA","aanale","Pedro")
+tupla3=("maria",28.5,False)
+tupla4=4,5,6
+print(tupla)
+print(tupla4)
+tupla5=()#tupla vacia no tiene sentido porque nunca jamas cambiará
+pi=(3.14159,)#esto es basicamente decir que esto es una tupla y no una variable una tupla es como una constante pq sino seria variable
+print(pi)
+#CONVERTIR DE LISTA  A TUPLA
+tupla6=tuple(lsitas)
+print(tupla6)
+#CONVERTIR DE TUPLA  A LISTA
+lista2=list(tupla4)
+print(lista2)
+#CONVERTIR DE TUPLA A STRING
+texto=str(tupla6)
+print(texto)
+tupla7=(1,2,(1,3,4),5,[1,2,3],7)#esto es crear una lista dentro de una tupla con lo cual ese apartado se puede modificar
+print(tupla7)
+print(tupla7[1])
+print(tupla7[4])
+tupla7[4][0]=33#aqui modificamos la lista dentro de la tupla
+print(tupla7[4])
+print(tupla7)
+#funciona index,len,la podemos recorrer con for,metodo count
+
+#CONJUNTOS
+conjunto1={"ana","pedro","luis","eva","eva","tu mami"}#no te permite repetidos
+print(conjunto1)#te los muestra aleatoriamente cada vez diferentes sin repetidos
+conjunto2=set(lsitas)#un set no repetidos es un conjunto
+print(conjunto2)
+for nombre in conjunto1:
+    print(nombre)
+#no tienen posicion no podemos recuperarla y son mutables y NO DUPLICADOS
+#print(conjunto1[0]) da error porque no tiene index
+if "ana" in conjunto1:#si puedo averigurar si donde esta pero no se en que posicion
+    print("Ana esta")
+print(len(conjunto1))
+conjunto1.add("pepe")
+#provoca error
+conjunto1.remove("pepe")
+#para borrar un elemento sin error
+conjunto1.discard("ana")#te borra el elemento sin error si no existe no hace nada none
+
+conjunto1.add("pepe")
+print(conjunto1.pop())#borra el primero pero como el primero cambia todo cambia
+conjunto1.clear()#para borrar completamente el conjunto de la misma forma en las listas
+
+profesorPrimero={"Natalia","Jose Maria","Pedro","Yago"}
+profesorSegundo={"Jose Maria","Agustin","Puche","Pedro"}
+
+#esto es para obtener la INTERSECCION de ambos conjuntos basicamente te muestra solo los que estan en ambas
+print(profesorPrimero & profesorSegundo)
+interseccion=profesorPrimero & profesorSegundo
+#su metodo correspondiente
+print(profesorPrimero.intersection(profesorSegundo))
+
+#te junta ambos y claro los repetidos no se muestran
+print(profesorPrimero | profesorSegundo)
+#metodo correspontiente
+print(profesorPrimero.union(profesorSegundo))
+
+
+print(profesorPrimero - profesorSegundo)#esto te devuelven los que no esten en los 2 basicamente los no repetidos El primer conjunto que se  mete se compara con el segundo y te muestra lo que en el primero no se repita en el segundo
+#metodo correspontiente
+print(profesorPrimero.difference(profesorSegundo))
+
+
+print(profesorSegundo - profesorPrimero)#esto te devuelven los que no esten en los 2 basicamente los no repetidos El primer conjunto que se  mete se compara con el segundo y te muestra lo que en el primero no se repita en el segundo
+#metodo correspondiente
+print(profesorSegundo.difference(profesorPrimero))
+
+
+#FUNCIONES
+def miFuncion(mensaje):
+    print("hola mis amores",mensaje)
+
+miFuncion("DRAGONES")
+def miFuncion1(mensaje):
+    print("hola mis amores",mensaje)
+    return "TE GUSTAN????????"
+print(miFuncion1("DRAGONES"))
+
+def miFuncion2(mensaje):
+    print(mensaje)
+valor=6
+miFuncion2([1,2,3])
+print(valor)
+
+def saludo(nombre,despedida):
+    return "hola"+nombre+despedida
+nombre ="JOSE MARIA"
+print(saludo(nombre,"Que te vaya bn"))
+#peudes devolver varios valores
+def devuelveNumeros():
+    return 1,2,3,4
+n1,n2,n3,n4=devuelveNumeros()#guardar valores devueltos
+print(n1,n2,n3,n4,sep=",")
+
+def funcion(valor):
+    valor*=5
+    print(valor)
+n=2
+funcion(n)
+print(n)#no se modifica n solo se manda una copia a la funcion
+def funcionn(valor):
+    valor[0]*=5
+    print(valor)
+n=[2]
+funcion(n)
+print(n)
+nombre2="y"
+re=""
+def saludar(nombre2,despedida="Te veo pronto bb"):
+    print("VAMOS!!")
+    return "hola" + nombre2 + despedida
+print(saludar(nombre2,"hola"))
+print(saludo(despedida="hola",nombre="hola2"))#podemos meter los parametros en distinto orden
+
+def muestraProfes(veces,*nombres):#espera recibir numero variable de argumentos y los recibe empaquetados en una tupla
+    for _ in range(veces):
+        for n in nombres:
+            print(n)
+muestraProfes(2,"natalia","Agustin",77)#te devuelve lo quepasaste
+muestraProfes(3,"rere","josema",89.9,"tete")
+
+def repiteNombre(veces,nombre):
+    for _ in range(veces):
+        print(nombre,end=" *** ")
+datos=[2,"Pepe"]
+datos2=[4,"luis"]
+repiteNombre(*datos)#esto es que  variables los elemetnos el primer datos las vces que se repite el name
+repiteNombre(*datos2)
+repiteNombre(*[3,"eva"])
+
+
+#tratamientos de excepciones
+bien=False
+while not bien:
+    try:
+        numero=int(input("\nintroduce un numero: "))
+        resultado=10/numero
+        print(resultado)
+        if numero<0:
+            raise Exception("No es un numero entero")#creamos una excepcion personalizada
+        assert numero>=0,"no admito numeros negativos"#si la condicion se evalua como falso no salta solo si es false osea si num es >= no salta
+    except ZeroDivisionError:
+        print("no se puede dividir por 0")
+    except ValueError:
+        print("no has metido un entero")
+    except:
+        print("ha ocurrido una excepcion")#si hay una excepcion  muestra esto
+    else:
+        print("Todo bien")
+        bien=True
+    finally:
+        print("Seguimos adelante...")
+    print("programa finalizado")
+#el bloque else se ejecuta si no hubo ninguna excepcion en0 el bloque try OPCIONAL
+#finally se va  ejecutar haya o o no haya excepciones
