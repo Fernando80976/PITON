@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 #cuando un iterador llega al final salta el error
 profesores=["Jose maria","Natalia","Agustin"]
 iterador=iter(profesores)
@@ -14,9 +15,14 @@ class DiasdelaSemana:
         self._dia=dia
     def __iter__(self):#iterador
         return self#esto solo es devolver
-    def __next__(self):
-        if self._dia >=len(self._dias):
-            raise StopIteration
+    def __next__(self,stop=None):
+        if self._dia==7:
+            self._dia=0
+        # if self._dia >=len(self._dias):
+        #     if stop==None:
+        #         raise StopIteration
+        #     else:
+        #         print(stop)
         dia_actual=self._dias[self._dia]
         self._dia+=1
         return dia_actual
@@ -29,5 +35,17 @@ print(next(iterador))
 print(next(iterador))
 print(next(iterador))
 print(next(iterador))
-#print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+print(next(iterador))
+
+print(next(iterador,"ya no hay mas dias"))
 #ahora quiero que despues del domingo venga siempre el lunes
