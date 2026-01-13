@@ -28,21 +28,29 @@ class mangas:
 
     def setUltimoTomo(self,ultimoTomo):
          self.__ultimoTomo=ultimoTomo
-    def tomosObtenidos(self,*Ntomos):#Añadir tomos
-            for tomo in Ntomos:
-                if tomo > self.__ultimoTomo:
-                    print("No puedes meter  un tomo invalido")
-                else:
-                    if tomo in self.__tomos_Poseidos:
-                        print("Ya tienes este tomo! BOBO no repitas  y compra la coleccion completa")
-                    else:
-                        self.__tomos_Poseidos.append(tomo)
+
+    def tomosObtenidos(self, *Ntomos):
+        for tomo in Ntomos:
+            if tomo < 1 or tomo > self.__ultimoTomo:
+                print(f"El tomo {tomo} no es válido. La colección llega hasta {self.__ultimoTomo}.")
+            elif tomo in self.__tomos_Poseidos:
+                print(f"El tomo {tomo} ya lo tienes.")
+            else:
+                self.__tomos_Poseidos.append(tomo)
+                print(f"Tomo {tomo} añadido correctamente.")
     def tomosFaltantes(self):
         tomosFaltantes=[]
         for i in range(1,self.__ultimoTomo+1):
             if i not in self.__tomos_Poseidos:
                 tomosFaltantes.append(i)
         return tomosFaltantes
+
+    def eliminarTomo(self, tomo):
+        if tomo in self.__tomos_Poseidos:
+            self.__tomos_Poseidos.remove(tomo)
+            print(f"Tomo {tomo} eliminado de la colección.")
+        else:
+            print(f"No puedes eliminar el tomo {tomo} porque no lo tienes.")
 mi_manga = mangas(
     autor="Eiichiro Oda",
     titulo_japones="One Piece",
@@ -77,3 +85,5 @@ print(faltantes)
 mi_manga.tomosObtenidos(4,5,6)
 print(mi_manga.tomosFaltantes())
 # Ahora los faltantes empezarán desde 7 hasta 20
+mi_manga.eliminarTomo(3)   # Lo elimina
+mi_manga.eliminarTomo(10)  # Aviso: no lo tienes

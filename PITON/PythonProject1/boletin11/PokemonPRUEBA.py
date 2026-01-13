@@ -1,71 +1,97 @@
 import random
-class pokemon:
-        def __init__(self,nombre,codigo,tipo,evolucion=None):
-            self.__nombre=nombre
-            self.__codigo=codigo
-            self.__pv=random.randint(50,100)
-            self.__evolucion=evolucion
-            self.__tipo=tipo
-        def ficha(self):
-            evoluciones="No tiene"
-            if self.__evolucion!=None:
-                evoluciones=self.__evolucion.__nombre
-            ficha = f"""
-            Ficha del Profesor/a:
-            ===========================
-            Nombre: {self.__nombre}
-            Código: {self.__codigo}
-            PV : {self.__pv}
-            Evoluciona a: {str(evoluciones)}
-            ===========================
 
-            """
-            return ficha
-        def evoluciona(self):
-            if self.__evolucion==None:
-                evo=self
-                print("Este pokemon no sabe evolucionar")
+# --- Clase Pokemon mejorada ---
+class Pokemon:
+    tipos_validos = ["Normal", "Agua", "Fuego", "Planta", "Volador", "Lucha",
+                     "Veneno", "Eléctrico", "Tierra", "Roca", "Psíquico",
+                     "Hielo", "Bicho", "Fantasma", "Dragón"]
 
-            else:
-                evo=self.__evolucion
-            return evo
-        def combateContra(self,pokemon):
-            if pokemon.__pv > 0 and self.__pv > 0:
-                print("Uno de los pokemon está si PV  dale un revivir no seas rata")
-                terminado = False
-            else:
-                ataque=random.randint(25,75)
-                pokemon.__pv=pokemon.__pv-ataque
-                print("ataque de ",self.__nombre,ataque)
-                terminado=True
+    def __init__(self, nombre, codigo, tipos, evolucion=None):
+        if not (1 <= codigo <= 151):
+            raise ValueError("El código debe estar entre 1 y 151")
+        self.__codigo = codigo
+        self.__nombre = nombre
+        if isinstance(tipos, str):
+            tipos = [tipos]
+        if len(tipos) > 2:
+            raise ValueError("Un Pokémon puede tener máximo dos tipos")
+        for t in tipos:
+            if t not in Pokemon.tipos_validos:
+                raise ValueError(f"Tipo no válido: {t}")
+        self.__tipos = tipos
+        self.__evolucion = evolucion
+        self.__pv = random.randint(50, 100)
 
-                while terminado==False:
+    # Getters
+    def getNombre(self):
+        return self.__nombre
 
-                    if pokemon.__pv <=0:
-                        print("Ganó el pokemon atacante",self.__nombre)
-                        terminado = True
-                    else:
-                        ataque = random.randint(25, 75)
-                        print("ataque de ",pokemon.__nombre,ataque)
+    def getCodigo(self):
+        return self.__codigo
 
-                        self.__pv=self.__pv-ataque
-                    if(self.__pv<=0):
-                        print("Gano el pokemon atacado",pokemon.__nombre)
-                        terminado = True
-                    # if(self.__pv>0 and pokemon.__pv>0):
-                    #     print("FUE EMPATE!!! AMIGOS")
-        # def multiplicadores(self):
-            
-p3=pokemon("Venusaur",3,"Planta")
-p2=pokemon("Ivysaur",2,"Planta",p3)#evoluciona a p3
-p1=pokemon("Bulbasaur",1,"Planta",p2)
+    def getTipos(self):
+        return self.__tipos
 
-print(p1.ficha())
-print(p2.ficha())
-print(p3.ficha())
-p1=p1.evoluciona()
-p3=p3.evoluciona()
-p1.ficha()
-p1.combateContra(p3)#primero ataca pokemon atacante
-print(p1.ficha())
-p1.combateContra(p3)
+    def getPV(self):
+        return self.__pv
+
+    # Evolución
+    def evoluciona(self):
+        if self.__evolucion:
+            return self.__evolucion
+        print(f"{self.__nombre} no puede evolucionar")
+        return self
+
+    # Ficha
+    def ficha(self):
+        evo = self.__evolucion.getNombre() if self.__evolucion else "No tiene"
+        tipos_str = ", ".join(self.__tipos)
+        return f"""
+Nombre: {self.__nombre}
+Código: {self.__codigo}
+Tipos: {tipos_str}
+PV: {self.__pv}
+Evoluciona a: {evo}
+"""
+
+    # Combate sencillo
+    def combateContra(self, otro):
+        print(f"\n--- Combate: {self.getNombre()} VS {otro.getNombre()} ---")
+        while self.__pv > 0 and otro.getPV() > 0:
+            # Ataque del atacante
+            ataque = random.randint(10, 30)
+            otro.__pv -= ataque
+            print(f"{self.getNombre()} ataca a {otro.getNombre()} por {ataque} PV")
+            if otro.__pv <= 0:
+                print(f"{otro.getNombre()} se debilitó. {self.getNombre()} gana!")
+                break
+
+            # Ataque del defensor
+            ataque = random.randint(10, 30)
+            self.__pv -= ataque
+            print(f"{otro.getNombre()} ataca a {self.getNombre()} por {ataque} PV")
+            if self.__pv <= 0:
+                print(f"{self.getNombre()} se debilitó. {otro.getNombre()} gana!")
+                break
+# Crear Pokémon
+venusaur = Pokemon("Venusaur", 3, "Planta")
+ivysaur = Pokemon("Ivysaur", 2, "Planta", evolucion=venusaur)
+bulbasaur = Pokemon("Bulbasaur", 1, "Planta", evolucion=ivysaur)
+
+charmander = Pokemon("Charmander", 4, "Fuego")
+charmeleon = Pokemon("Charmeleon", 5, "Fuego", evolucion=None)
+# Para simplificar, no evolucionaremos charmander en este ejemplo
+
+# Mostrar fichas
+print(bulbasaur.ficha())
+print(ivysaur.ficha())
+print(venusaur.ficha())
+print(charmander.ficha())
+
+# Evolucionar un Pokémon
+bulbasaur_evo = bulbasaur.evoluciona()
+print("Después de evolucionar:")
+print(bulbasaur_evo.ficha())
+
+# Combate
+bulbasaur_evo.combateContra(charmander)
