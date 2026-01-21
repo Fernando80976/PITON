@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 # Inicializar pygame
 pygame.init()
@@ -23,10 +24,14 @@ big_font = pygame.font.SysFont(None, 30)
 
 clock = pygame.time.Clock()
 
+# ------------------ CLASES ------------------
+
 class Move:
-    def __init__(self, name, damage):
+    def __init__(self, name, damage, status_effect=None, status_chance=0):
         self.name = name
         self.damage = damage
+        self.status_effect = status_effect
+        self.status_chance = status_chance
 
 class Pokemon:
     def __init__(self, name, max_hp, moves):
@@ -34,22 +39,42 @@ class Pokemon:
         self.max_hp = max_hp
         self.hp = max_hp
         self.moves = moves
+        self.status = None  # burn, poison, None
 
     def take_damage(self, amount):
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
 
-# Crear movimientos
-placaje = Move("Placaje", 20)
-ascuas = Move("Ascuas", 25)
-latigo = Move("Látigo", 15)
+    def apply_status(self, status):
+        if self.status is None:
+            self.status = status
 
-# Crear pokémon
-player_pokemon = Pokemon("Charmander", 100, [placaje, ascuas])
+    def status_damage(self):
+        if self.status == "burn":
+            dmg = self.max_hp // 16
+            self.take_damage(dmg)
+            return f"{self.name} sufre daño por quemadura"
+        if self.status == "poison":
+            dmg = self.max_hp // 8
+            self.take_damage(dmg)
+            return f"{self.name} sufre daño por veneno"
+        return None
+
+# ------------------ MOVIMIENTOS ------------------
+
+placaje = Move("Placaje", 5)
+ascuas = Move("Ascuas", 5, status_effect="burn", status_chance=0.3)
+latigo = Move("Látigo", 15)
+veneno = Move("Tóxico", 10, status_effect="poison", status_chance=0.7)
+
+# ------------------ POKÉMON ------------------
+
+player_pokemon = Pokemon("Charmander", 100, [placaje, ascuas, veneno])
 enemy_pokemon = Pokemon("Bulbasaur", 100, [placaje, latigo])
 
-# Estados del juego
+# ------------------ ESTADOS ------------------
+
 PLAYER_TURN = "player"
 ENEMY_TURN = "enemy"
 GAME_OVER = "game_over"
@@ -57,26 +82,60 @@ GAME_OVER = "game_over"
 state = PLAYER_TURN
 message = "¡Elige un movimiento!"
 
-# Botones de movimientos
-button_rects = []
-for i in range(2):
-    rect = pygame.Rect(50, 400 + i * 60, 200, 50)
-    button_rects.append(rect)
+# ------------------ FUNCIONES ------------------
 
+def create_move_buttons(pokemon, sprite_rect):
+    """Crea botones de movimientos debajo del sprite del Pokémon"""
+    buttons = []
+    start_x = sprite_rect.left
+    start_y = sprite_rect.bottom + 10
 
-def draw_hp_bar(x, y, pokemon):
-    bar_width = 200
-    bar_height = 20
+    for i in range(len(pokemon.moves)):
+        rect = pygame.Rect(start_x, start_y + i * 55, sprite_rect.width, 45)
+        buttons.append(rect)
+    return buttons
+
+def reset_battle():
+    global state, message, button_rects
+    player_pokemon.hp = player_pokemon.max_hp
+    enemy_pokemon.hp = enemy_pokemon.max_hp
+    player_pokemon.status = None
+    enemy_pokemon.status = None
+    state = PLAYER_TURN
+    message = "¡Elige un movimiento!"
+    button_rects = create_move_buttons(player_pokemon, player_rect)
+
+def draw_hp_bar(pokemon, sprite_rect):
+    """Dibuja nombre, barra de vida y estado adaptados al sprite"""
+    bar_width = sprite_rect.width
+    bar_height = 15
     ratio = pokemon.hp / pokemon.max_hp
-    pygame.draw.rect(screen, RED, (x, y, bar_width, bar_height))
-    pygame.draw.rect(screen, GREEN, (x, y, bar_width * ratio, bar_height))
- # Texto HP actual / HP máximo
-    hp_text = f"{pokemon.hp} / {pokemon.max_hp}"
-    text_surface = font.render(hp_text, True, BLACK)
 
-    # Centrar el texto sobre la barra
-    text_rect = text_surface.get_rect(center=(x + bar_width // 2, y + bar_height // 2))
-    screen.blit(text_surface, text_rect)
+    # Posición de la barra sobre el sprite
+    x = sprite_rect.left
+    y = sprite_rect.top - 25  # barra debajo del nombre
+
+    # Barra de fondo roja
+    pygame.draw.rect(screen, RED, (x, y, bar_width, bar_height))
+    # Barra verde proporcional
+    pygame.draw.rect(screen, GREEN, (x, y, bar_width * ratio, bar_height))
+
+    # Texto del HP actual / máximo centrado en la barra
+    hp_text = f"{pokemon.hp}/{pokemon.max_hp}"
+    hp_surface = font.render(hp_text, True, BLACK)
+    hp_rect = hp_surface.get_rect(center=(x + bar_width // 2, y + bar_height // 2))
+    screen.blit(hp_surface, hp_rect)
+
+    # Nombre del Pokémon encima de la barra
+    name_surface = font.render(pokemon.name, True, BLACK)
+    name_rect = name_surface.get_rect(center=(x + bar_width // 2, y - 12))
+    screen.blit(name_surface, name_rect)
+
+    # Estado si existe encima de la barra
+    if pokemon.status:
+        status_surface = font.render(pokemon.status.upper(), True, RED)
+        status_rect = status_surface.get_rect(center=(x + bar_width // 2, y - 25))
+        screen.blit(status_surface, status_rect)
 
 def draw_text(text, x, y, font=font, color=BLACK):
     img = font.render(text, True, color)
@@ -85,31 +144,63 @@ def draw_text(text, x, y, font=font, color=BLACK):
 
 def enemy_turn():
     global state, message
-    move = enemy_pokemon.moves[0]
-    player_pokemon.take_damage(move.damage)
-    message = f"{enemy_pokemon.name} usó {move.name}!"
-    if player_pokemon.hp <= 0:
-        state = GAME_OVER
-    else:
-        state = PLAYER_TURN
+    # 1️⃣ Aplicar daño por estado del jugador
+    status_msg = player_pokemon.status_damage()
+    if status_msg:
+        message = f"{status_msg}"
 
-# Bucle principal
+    # 2️⃣ Turno enemigo normal
+    if player_pokemon.hp > 0:
+        move = enemy_pokemon.moves[0]
+        player_pokemon.take_damage(move.damage)
+        message += f" | {enemy_pokemon.name} usó {move.name}!"
+
+        # Daño por estado del enemigo
+        status_msg_enemy = enemy_pokemon.status_damage()
+        if status_msg_enemy:
+            message += f" | {status_msg_enemy}"
+
+        if player_pokemon.hp <= 0:
+            state = GAME_OVER
+        else:
+            state = PLAYER_TURN
+
+
+# ------------------ SPRITES ------------------
 
 player_sprite = pygame.image.load("sprites/Charmander.png").convert_alpha()
 enemy_sprite = pygame.image.load("sprites/bulbasaur.png").convert_alpha()
 
-# Escalar (opcional pero recomendado)
 player_sprite = pygame.transform.scale(player_sprite, (110, 110))
 enemy_sprite = pygame.transform.scale(enemy_sprite, (120, 120))
 
+player_rect = player_sprite.get_rect(topleft=(100, 250))
+enemy_rect = enemy_sprite.get_rect(topleft=(600, 100))
+
+# Botones iniciales
+button_rects = create_move_buttons(player_pokemon, player_rect)
+revenge_button = pygame.Rect(300, 500, 200, 50)
+
+# ------------------ BUCLE PRINCIPAL ------------------
 
 running = True
 while running:
     clock.tick(60)
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+        # BOTÓN REVANCHA
+        if state == GAME_OVER and event.type == pygame.MOUSEBUTTONDOWN:
+            if revenge_button.collidepoint(event.pos):
+                reset_battle()
+
+        # TURNO JUGADOR
+        if state == PLAYER_TURN:
+            # Antes de atacar, aplicar daño por estado del jugador
+            status_msg_player = player_pokemon.status_damage()
+            if status_msg_player:
+                message = status_msg_player
 
         if state == PLAYER_TURN and event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = event.pos
@@ -118,47 +209,53 @@ while running:
                     move = player_pokemon.moves[i]
                     enemy_pokemon.take_damage(move.damage)
                     message = f"{player_pokemon.name} usó {move.name}!"
+
+                    # Efectos de estado
+                    if move.status_effect and random.random() < move.status_chance:
+                        enemy_pokemon.apply_status(move.status_effect)
+                        message += f" ¡{enemy_pokemon.name} fue {move.status_effect}!"
+                        status_msg = enemy_pokemon.status_damage()
+                        if status_msg:
+                            message += f" | {status_msg}"
+
                     if enemy_pokemon.hp <= 0:
                         state = GAME_OVER
                     else:
                         state = ENEMY_TURN
 
-    # Turno enemigo automático
+    # TURNO ENEMIGO
     if state == ENEMY_TURN:
         pygame.time.delay(900)
         enemy_turn()
 
-    # Dibujar pantalla
-    screen.fill(WHITE)
+    # ------------------ DIBUJADO ------------------
+    screen.fill(BLUE)
 
-    # Pokémon (rectángulos de ejemplo)
-    screen.blit(player_sprite, (100, 250))
-    screen.blit(enemy_sprite, (600, 100))
+    # Sprites
+    screen.blit(player_sprite, player_rect)
+    screen.blit(enemy_sprite, enemy_rect)
 
-    # Nombres y HP
-    draw_text(player_pokemon.name, 50, 220)
-    draw_hp_bar(50, 245, player_pokemon)
+    # Nombres
 
+    # Barras de vida
+    draw_hp_bar(player_pokemon, player_rect)
+    draw_hp_bar(enemy_pokemon, enemy_rect)
 
-    draw_text(enemy_pokemon.name, 550, 70)
-    draw_hp_bar(550, 95, enemy_pokemon)
-
-    # Mensaje
-    draw_text(message, 50, 350, big_font)
-
-    # Botones
+    # Botones de movimiento
     if state == PLAYER_TURN:
         for i, rect in enumerate(button_rects):
             pygame.draw.rect(screen, GRAY, rect)
-            draw_text(player_pokemon.moves[i].name, rect.x + 10, rect.y + 15)
+            draw_text(player_pokemon.moves[i].name, rect.x + 10, rect.y + 10)
+
+    # Mensaje dinámico debajo de los botones
+    draw_text(message, player_rect.left, player_rect.bottom + len(button_rects)*55 + 20, big_font)
 
     # Game Over
     if state == GAME_OVER:
-        if player_pokemon.hp <= 0:
-            end_text = "¡Has perdido!"
-        else:
-            end_text = "¡Has ganado!"
-        draw_text(end_text, 300, 500, big_font, RED)
+        end_text = "¡Has perdido!" if player_pokemon.hp <= 0 else "¡Has ganado!"
+        draw_text(end_text, 300, 450, big_font, RED)
+        pygame.draw.rect(screen, BLUE, revenge_button)
+        draw_text("Revancha", revenge_button.x + 50, revenge_button.y + 15, big_font, WHITE)
 
     pygame.display.flip()
 
