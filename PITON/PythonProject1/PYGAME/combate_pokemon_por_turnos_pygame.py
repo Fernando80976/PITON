@@ -4,12 +4,39 @@ import random
 
 # Inicializar pygame
 pygame.init()
+from PIL import Image
+
+im = Image.open("soloLevelingAtaque.gif")
+frames = []
+
+try:
+    while True:
+        frame = im.copy()
+        frames.append(frame)
+        im.seek(im.tell() + 1)
+except EOFError:
+    pass
+
+# Guardar frames como PNG
+for i, frame in enumerate(frames):
+    frame.save(f"ataque_frame_{i}.png")
+
+# ------------------ VARIABLES DE ANIMACIÓN ------------------
+attacking = False
+current_attack_frames = []
+attack_frame_index = 0
+attack_frame_delay = 5
+attack_position = (0, 0)
 
 # Configuración de pantalla
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Combate Pokémon por Turnos")
 
+
+attack_frames = [pygame.image.load(f"ataque_frame_{i}.png").convert_alpha() for i in range(len(frames))]
+attack_frame_index = 0
+attack_frame_delay = 5
 # Colores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -52,11 +79,11 @@ class Pokemon:
 
     def status_damage(self):
         if self.status == "burn":
-            dmg = self.max_hp // 16
+            dmg = self.max_hp // 40
             self.take_damage(dmg)
             return f"{self.name} sufre daño por quemadura"
         if self.status == "poison":
-            dmg = self.max_hp // 8
+            dmg = self.max_hp // 29
             self.take_damage(dmg)
             return f"{self.name} sufre daño por veneno"
         return None
@@ -71,7 +98,7 @@ veneno = Move("Tóxico", 10, status_effect="poison", status_chance=0.7)
 # ------------------ POKÉMON ------------------
 
 player_pokemon = Pokemon("Charmander", 100, [placaje, ascuas, veneno])
-enemy_pokemon = Pokemon("Bulbasaur", 100, [placaje, latigo])
+enemy_pokemon = Pokemon("Bulbasaur", 100, [placaje, latigo,veneno])
 
 # ------------------ ESTADOS ------------------
 
@@ -144,27 +171,32 @@ def draw_text(text, x, y, font=font, color=BLACK):
 
 def enemy_turn():
     global state, message
-    # 1️⃣ Aplicar daño por estado del jugador
+    # Daño por estado del jugador antes del turno enemigo
     status_msg = player_pokemon.status_damage()
     if status_msg:
         message = f"{status_msg}"
 
-    # 2️⃣ Turno enemigo normal
     if player_pokemon.hp > 0:
-        move = enemy_pokemon.moves[0]
+        # Elegir un movimiento aleatorio
+        move = random.choice(enemy_pokemon.moves)
         player_pokemon.take_damage(move.damage)
         message += f" | {enemy_pokemon.name} usó {move.name}!"
 
-        # Daño por estado del enemigo
+        # Aplicar efectos de estado del movimiento
+        if move.status_effect and random.random() < move.status_chance:
+            player_pokemon.apply_status(move.status_effect)
+            message += f" ¡{player_pokemon.name} fue {move.status_effect}!"
+
+        # Daño por estado del enemigo (si tiene burn o poison)
         status_msg_enemy = enemy_pokemon.status_damage()
         if status_msg_enemy:
             message += f" | {status_msg_enemy}"
 
+        # Verificar si el jugador murió
         if player_pokemon.hp <= 0:
             state = GAME_OVER
         else:
             state = PLAYER_TURN
-
 
 # ------------------ SPRITES ------------------
 
@@ -207,8 +239,15 @@ while running:
             for i, rect in enumerate(button_rects):
                 if rect.collidepoint(mx, my):
                     move = player_pokemon.moves[i]
-                    enemy_pokemon.take_damage(move.damage)
-                    message = f"{player_pokemon.name} usó {move.name}!"
+
+                    # Configurar animación
+                    attacking = True
+                    current_attack_frames = attack_frames  # todos los frames de tu GIF
+                    attack_frame_index = 0
+                    attack_position = enemy_rect.topleft  # sobre el enemigo
+
+                    # Guardamos el movimiento para aplicar daño al final de la animación
+                    pending_move = move
 
                     # Efectos de estado
                     if move.status_effect and random.random() < move.status_chance:
@@ -230,6 +269,33 @@ while running:
 
     # ------------------ DIBUJADO ------------------
     screen.fill(BLUE)
+    # ------------------ ANIMACIÓN DE ATAQUE ------------------
+    if attacking and player_pokemon.moves[0]:
+        # Mostrar frame actual
+        frame = current_attack_frames[attack_frame_index // attack_frame_delay]
+        screen.blit(frame, attack_position)
+        attack_frame_index += 1
+
+        # Verificar si la animación terminó
+        if attack_frame_index >= len(current_attack_frames) * attack_frame_delay:
+            attacking = False
+
+            # Aplicar daño y estado después de la animación
+            enemy_pokemon.take_damage(pending_move.damage)
+            message = f"{player_pokemon.name} usó {pending_move.name}!"
+
+            if pending_move.status_effect and random.random() < pending_move.status_chance:
+                enemy_pokemon.apply_status(pending_move.status_effect)
+                message += f" ¡{enemy_pokemon.name} fue {pending_move.status_effect}!"
+                status_msg = enemy_pokemon.status_damage()
+                if status_msg:
+                    message += f" | {status_msg}"
+
+            # Revisar si el enemigo murió
+            if enemy_pokemon.hp <= 0:
+                state = GAME_OVER
+            else:
+                state = ENEMY_TURN
 
     # Sprites
     screen.blit(player_sprite, player_rect)
