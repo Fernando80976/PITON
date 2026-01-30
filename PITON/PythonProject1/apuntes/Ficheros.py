@@ -1,6 +1,6 @@
 #r -> read
-#w -> write
-#a -> append=añade al final del fichero
+#w -> write lo modifica
+#a -> append=añade al final del fichero, si no existe lo crea
 #usar r+w para lectura y estructura
 #como grabamos el fichero
 #t -> Texto no puedes grabar un objeto
@@ -36,8 +36,51 @@ except:
 
 try:
     fichero =open("quijote.txt","wt")
-    lista=["En un lugar de La Mancha \n","de cuyo nombre \n","No quiero acordarme \n"]
+    lista=["En un lugar de La Mancha \n","de cuyo nombre \n","No quiero acordarme \n"]#[1,3,4,5,] no puedes meter numeros parsealos a string
     fichero.writelines(lista)
     fichero.close()
 except:
     print("Error al manipular el fichero")
+#Lectura
+try:
+        fichero = open("quijote.txt", "rt")
+
+        print(fichero.readlines())
+        print(fichero.readline())
+
+        fichero.close()
+except:
+        print("Error al manipular el fichero")
+
+try:
+        fichero = open("quijote.txt", "r+")#lectura y escritura
+
+        print(fichero.readline())
+        print (fichero.tell())
+        fichero.write("XXX")
+        print(fichero.tell())
+        print(fichero.seek(0))#te regresa la posicion del cursor
+
+        fichero.close()
+except:
+        print("Error al manipular el fichero")
+
+try:
+        fichero = open("quijote.txt", "r+")#lectura y escritura
+
+        print(fichero.readline())
+        print("Despues de leer estoy aqui",fichero.tell())
+        fichero.write("XXX")
+        print("despues de escribir estoy aqui",fichero.tell())
+        #te regresa la posicion del cursor al pricnipio
+
+        print(fichero.seek(0))
+        print("despues de usar seek",print(fichero.tell()))
+        print(fichero.seek(0,2))#al final del fichero
+        print(fichero.seek(424))#colocar poscion que desees contadno desde el principio
+        fichero.seek(0)
+        fichero.seek(fichero.tell()+10)#te suma desde donde esta el cursor actualmente
+
+        fichero.close()
+except:
+        print("Error al manipular el fi")
