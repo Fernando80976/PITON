@@ -1,8 +1,8 @@
 import mysql.connector
 
 try:
-    conexion = mysql.connector.connect(user="daw2",password="LaElipa",
-                                       host="localhost",database="dwes2")
+    conexion = mysql.connector.connect(user="root",password="fere",
+                                       host="localhost",database="pokemondb")
     cursor = conexion.cursor()
     query2 = "select nombre from pokemon where peso>200"
     cursor.execute(query2)
